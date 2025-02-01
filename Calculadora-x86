@@ -1,0 +1,1788 @@
+Title Calculadora ABE - Eduardo Marras, Bianca Aparecida Andrade, Amanda Soares da Silveira
+  .model small
+.stack 100h
+.data
+    menuTitleI     db'____ ____   ___    __ __________  ___  '
+    menuTitleII    db'|| \\|| \\ // \\   ||||   | || | // \\ ' 
+    menuTitleIII   db'||_//||_//((   ))  ||||==   ||  ((   ))'
+    menuTitleIV    db'||   || \\ \\_//|__||||___  ||   \\_// '
+
+     menuOP1 db 13,10,'   Selecionar  Calculadora aperte (1)'
+     menuOP2 db 13,10,'   Selecionar  Conversor aperte (2)  '
+     menuOP3 db 13,10,'   Selecionar  Saida aperte (3)      '
+      blank  db       '                                     '
+    
+    conversorTitleI      db' __  __  _  _ _  ____ ___  __ ___ ___ ' 
+    conversorTitleII     db'|   |  | |\ | |  ||__ |_/ [__|  ||_/  '
+    conversorTitleIII    db'|__ |__| | \|  \/ |__ | \ __]|__|| \  '
+                                          
+    decimal_button   db 'Decimal(x)$'
+    binario_button   db 'Binario(y)$'
+    hexa_button      db  'Hexade(z)$'
+    conv_saida db 'SAIDA(1)'
+    fim_leitura db 13,10,13,10,'              Fim leitura $'
+    escolhe db 13,10,13,10,'Digite a base de destino: $'
+    escolha_decimal   db 13,10,13,10,'Numero decimal: $'
+    escolha_binario  db  13,10,13,10,'Numero binario: $'      
+    escolha_hexadecimal     db  13,10,13,10,'Numero hexadecimal: $'
+    pula_linha     db     13,10,'$'
+    nao_tem_raiz   db     13,10,'     Nao tem raiz$'  
+
+ calc_buttonQ db 'x^2(q)$'
+ calc_buttonR db 'Vx(r)$'
+ calc_buttonE db '^(e)$'
+ calc_buttonL db 'log(l)$'
+ calc_buttonM db ' ||$'
+ calc_buttonP db '%(p)'
+ calc_buttonF db 'F(x)'
+ calc_saida db  'SAIDA(z)$'
+ calc_n1  db'n1(g)$'
+ calc_n2 db 'n2(h)$'
+ calc_bOP db 'op(o)$'
+   PX db ?
+   limpa_visor db '                   $'
+ visor_log db 'LOG $'
+ visor_raiz db 'V$'
+ visor_modulo db '|$'
+    n1 dw  ?
+    n2 dw ?
+    aux db ?
+    res dw ?
+    auxop db ?
+    somaux db ?
+.code 
+main proc 
+    mov ax,@data
+    mov ds,ax
+   menu:
+    call menu_principal 
+    call OpcaoFunc 
+
+    cmp auxop, 1
+    je calc
+    cmp auxop, 2 
+    je conv
+    cmp auxop, 3
+    je saim
+calc:
+    call menu_calc
+    
+    call calc_entrada
+conv2:
+    call menu_conversor
+    CALL fconv
+    jmp saim 
+saim2:
+    mov ah,4ch
+    int 21h
+main endp
+
+ realiza_op proc   
+    cmp aux,1
+    je somaf
+
+    cmp aux,2
+    je subf
+    
+    cmp aux,3
+    je mulf
+    
+    cmp aux,4 
+    je divif
+    
+    cmp aux,5
+    je expf 
+
+    cmp aux,6
+    je quadf 
+
+    cmp aux,7
+    je porcef
+    
+    cmp aux,8
+    je raizf
+    
+    cmp aux,9
+    je moduloff
+    conv:
+    jmp conv2
+    
+    saim:
+    jmp saim2
+somaf:
+    CALL fsoma
+    call resultado 
+    jmp sai_reliza_op
+subf:
+    CALL fusub
+    call resultado 
+    jmp sai_reliza_op
+mulf:
+    CALL fumul
+    call resultado 
+    jmp sai_reliza_op
+divif:
+    CALL fudiv
+    call resultado 
+    jmp sai_reliza_op 
+    
+expf:
+    CALL fexp
+    call resultado 
+    jmp sai_reliza_op 
+
+quadf: 
+   call fquad                    
+   call resultado              
+   jmp sai_reliza_op
+porcef: 
+   call fporce             
+   call resultado                  
+   jmp sai_reliza_op
+raizf:
+   call fraiz  
+   call resultado
+   jmp sai_reliza_op
+
+moduloff:
+ call fmodulo
+  sai_reliza_op:
+   ret
+  endp realiza_op
+
+menu_principal proc 
+   mov ax,@data
+   mov es,ax   ;move o data para es 
+ 
+ mov al, 13h     ;modo grafico, 256 cores, 1 pagina
+ mov ah, 0   ;escolhe o modo de video 
+ int 10h
+;-------------------------------------------------------
+;             TITULO MENU
+;-------------------------------------------------------
+lea bp,[menutitleI] 
+mov ah,13h  ;função 13 - write string
+mov al,01h  ;a movimentação do cursor esta em bl 
+xor bx,bx   ;limpa bl para receber a posiçao do cursor
+mov bl,11    ;cor 
+mov cx,38   ;tamanho da string 
+mov dh,1   ; posição y 
+mov dl,1   ;posição x
+int 10h 
+
+lea bp,[menutitleII] 
+mov ah,13h  ;função 13 - write string
+mov al,01h  ;a movimentação do cursor esta em bl 
+xor bx,bx   ;limpa bl para receber a posiçao do cursor
+mov bl,11    ;cor 
+mov cx,38   ;tamanho da string 
+mov dh,2   ; posição y 
+mov dl,1   ;posição x
+int 10h 
+
+lea bp,[menutitleIII] 
+mov ah,13h  ;função 13 - write string
+mov al,01h  ;a movimentação do cursor esta em bl 
+xor bx,bx   ;limpa bl para receber a posiçao do cursor
+mov bl,15    ;cor 
+mov cx,39   ;tamanho da string 
+mov dh,3  ; posição y 
+mov dl,1   ;posição x
+int 10h     
+
+lea bp,[menutitleIV] 
+mov ah,13h  ;função 13 - write string
+mov al,01h  ;a movimentação do cursor esta em bl 
+xor bx,bx   ;limpa bl para receber a posiçao do cursor
+mov bl,11    ;cor 
+mov cx,38   ;tamanho da string 
+mov dh,5   ; posição y
+mov dl,1   ;posição x
+int 10h  
+;-------------------------------------------------------
+;             OPCOES MENU
+;-------------------------------------------------------
+lea bp,[menuop1] ;string a ser escrita 
+mov ah,13h       ;função 13 - write string
+mov al,01h       ;a movimentação do cursor esta em bl 
+xor bx,bx        ;limpa bl para receber a posiçao do cursor
+mov bl,15        ;cor 
+mov cx,42        ;tamanho da string 
+mov dh,12        ;posição y
+mov dl,12        ;posição x
+int 10h 
+
+lea bp,[menuop2] ;string a ser escrita 
+mov ah,13h       ;função 13 - write string
+mov al,01h       ;a movimentação do cursor esta em bl 
+xor bx,bx        ;limpa bl para receber a posiçao do cursor
+mov bl,15        ;cor 
+mov cx,40        ;tamanho da string 
+mov dh,14        ; posição y
+mov dl,12        ;posição x
+int 10h 
+
+
+lea bp,[menuop3] ;string a ser escrita 
+mov ah,13h       ;função 13 - write string
+mov al,01h       ;a movimentação do cursor esta em bl 
+xor bx,bx        ;limpa bl para receber a posiçao do cursor
+mov bl,15        ;cor 
+mov cx,36        ;tamanho da string 
+mov dh,16        ; posição y
+mov dl,12        ;posição x
+int 10h 
+    ret 
+endp menu_principal 
+
+OpcaoFunc proc 
+    ler_func:
+        mov ah,00h        ;le o caracter de entrada do usuario 
+        int 16h
+        
+        cmp al,31h        ;se for 1, chama a calculadora 
+        je calculadoraOP
+        
+        cmp al,32h        ;se for 2,chama o conversor 
+        je conversorOP
+
+         cmp al,33h        ;se for 3,chama a saida 
+         je saibla
+        
+        
+        jmp ler_func
+calculadoraOP:
+ ;salva a opcao escolhida em uma variavel   
+    mov ax,31h
+    mov [auxop], al ;move o numero 1 para a variavel auxop que vai representar as operacoes de uma calc
+    jmp sai_OpcaoFunc 
+conversorOP:
+    mov ax, 2     
+    mov auxop, al ;move o numero 2 para a variavel auxop que vai representar o conversor
+    jmp sai_OpcaoFunc
+saibla:
+   mov ax,3
+   mov auxop,al
+   jmp sai_opcaofunc
+sai_OpcaoFunc:
+    ret 
+OpcaoFunc endp
+;---------------------------------------------
+;             CALCULADORA   
+;--------------------------------------------- 
+menu_calc proc              
+ mov ax,@data 
+ mov es,ax     
+;------------------------------
+;  botoes da calculadora   
+;------------------------------
+ ;seta o modo de video 
+    mov ah,0h 
+    mov al,13h 
+    int 10h 
+;posição da primeira linha da calculadora 
+     mov ah,2  ;seta posicao do cursor
+     mov dh,7  ;y
+     mov dl,3 ;x                                                                                                  
+     mov bh,0  ;numero da pagina 
+     int 10h  
+ ;printa o botao x²
+    lea bp,calc_buttonQ
+    mov ah,13h
+    mov al,01h           
+    xor bx,bx          
+    mov bl,11
+    mov cx,3
+    int 10h
+    ;posiçao do botao raiz quadrada 
+        mov ah,2  
+        mov dl,9 ;x
+        int 10h 
+    ;printa botao raiz quadrada 
+        lea bp,calc_buttonR
+        mov ah,13h
+        mov al,01h                  
+        mov cx,2
+        int 10h
+    ;posiçao do botao exponencial 
+        mov ah,2 
+        mov dl,15
+        int 10h 
+    ;printa botao exponencial 
+        lea bp,calc_buttonE
+        mov ah,13h 
+        mov al,01h                     
+        mov cx,1
+        int 10h
+    ;posiçao botao soma 
+        mov ah,2 
+        mov dl,20
+        int 10h
+    ;printa botao soma 
+        mov ah,09h 
+        mov al,2Bh ;ascii +
+        mov cx,1
+        int 10h
+    ;posiçao botao log 
+        mov ah,2
+        mov dh,9 ;y
+        mov dl,3  ;x
+        int 10h
+    ;printa o botao log 
+        lea bp,calc_buttonL
+        mov ah,13h      
+        mov al,01h             
+        mov cx,3
+        int 10h
+    ;posiçao botao modulo  
+        mov ah,2  
+        mov dl,8 ;x
+        int 10h 
+    ;printa o botao modulo
+        lea bp,calc_buttonM
+        mov ah,13h 
+        mov al,01h                     
+        mov cx,3
+        int 10h
+    ;posiçao botao porcentagem 
+        mov ah,2 
+        mov dl,15
+        int 10h 
+    ;printa botao porcentagem 
+        lea bp,calc_buttonP
+        mov ah,13h 
+        mov al,01h                     
+        mov cx,1
+        int 10h
+    ;posiçao botao subtraçao 
+        mov ah,2 
+        mov dl,20
+        int 10h
+    ;printa botao subtraçao 
+        mov ah,09h 
+        mov al,2Dh ;ascii -
+        mov cx,1
+        int 10h
+    ;posiçao botao 1 
+        mov ah,2
+        mov dh,12 ;y
+        mov dl,4 ;x + 2 
+        int 10h
+    ;printa botao 1 
+        mov ah,09h 
+        mov al,31h ;ascii 1
+        mov cx,1
+        int 10h
+        ;posiçao botao 2 
+        mov ah,2  
+        mov dl,10 ;x
+        int 10h 
+    ;printa botao 2 
+        mov ah,09h 
+        mov al,32h ;ascii 2
+        mov cx,1
+        int 10h
+    ;posiçao botao 3 
+        mov ah,2 
+        mov dl,15
+        int 10h 
+    ;printa botao 3 
+        mov ah,09h 
+        mov al,33h ;ascii 3
+        mov cx,1
+        int 10h
+    ;posiçao botao multiplicaçao 
+        mov ah,2 
+        mov dl,20
+        int 10h
+    ;printa botao multiplicaçao 
+        mov ah,09h 
+        mov al,2Ah ;ascii *
+        mov cx,1
+        int 10h
+        ;posiçao botao 4
+        mov ah,2
+        mov dh,15 ;y
+        mov dl,4 ;x + 2 
+        int 10h
+    ;printa botao 4 
+        mov ah,09h 
+        mov al,34h ;ascii 4
+        mov cx,1
+        int 10h
+        ;posiçao botao 5 
+        mov ah,2  
+        mov dl,10 ;x
+    int 10h 
+    ;printa botao 5 
+        mov ah,09h 
+        mov al,35h ;ascii 5
+        mov cx,1
+        int 10h
+    ;posiçao botao 6 
+        mov ah,2 
+        mov dl,15 
+        int 10h 
+    ;printa botao 6 
+        mov ah,09h 
+        mov al,36h ;ascii 6
+        mov cx,1    
+        int 10h
+    ;posiçao botao divisao 
+        mov ah,2 
+        mov dl,20
+        int 10h
+    ;printa botao divisao 
+        mov ah,09h 
+        mov al,2Fh ;ascii /
+        mov cx,1
+        int 10h
+        ;posiçao botao 7 
+        mov ah,2
+        mov dh,18 ;y
+        mov dl,4  ;x + 2 
+        int 10h
+    ;printa botao 7 
+        mov ah,09h 
+        mov al,37h ;ascii 7
+        mov cx,1
+        int 10h
+    ;posiçao botao 8 
+        mov ah,2  
+        mov dl,10 ;x
+        int 10h 
+    ;printa botao 8 
+        mov ah,09h 
+        mov al,38h ;ascii 8
+        mov cx,1
+    int 10h
+    ;posição botao 9 
+        mov ah,2 
+        mov dl,15
+        int 10h 
+    ;printa botao 9 
+        mov ah,09h 
+        mov al,39h ;ascii 9
+        mov cx,1
+        int 10h
+    ;posiçao botao =
+        mov ah,2 
+        mov dl,20
+        int 10h
+    ;printa botao =
+        mov ah,09h 
+        mov al,3Dh ;ascii =
+        mov cx,1
+        int 10h
+
+    ;posiçao do botao n1
+        mov ah,2
+        mov dh,21
+        mov dl,3 ;x 
+        int 10h
+    ;printa botao n1 
+        lea bp,calc_n1 
+        mov ah,13h
+        mov al,01h           
+        xor bx,bx          
+        mov bl,11
+        mov cx,2
+        int 10h   
+    ;posiçao do botao n2 
+        mov ah,2
+        mov dl,10 ;x + 2 
+        int 10h
+    ;printa n2
+    lea bp,calc_n2 
+    mov ah,13h
+        mov al,01h           
+        xor bx,bx          
+        mov bl,11
+        mov cx,2
+        int 10h
+    ;posicao botao 0 
+        mov ah,2
+        mov dl,15  ;x + 2 
+        int 10h
+    ;printa botao 0 
+        mov ah,09h 
+        mov al,30h ;ascii 0
+        mov cx,1
+        int 10h
+  ;posiçao do botao Clean
+        mov ah,2 
+        mov dl,20
+        int 10h
+  ;printa botao Clean 
+    mov ah,09h 
+    mov al,43h ;ascii C
+    mov cx,1
+    int 10h
+;posiçao a opçao de saida 
+  mov ah,2 
+  mov dh,22 ;y 
+  mov dl,28 ;x 
+  mov bh,0 
+  int 10h
+;printa a opçao de saida 
+  lea bp,calc_saida
+  mov ah,13h
+  mov al,01h          
+  mov cx,8
+  int 10h
+;------------------------------
+;        bordas calc 
+;------------------------------
+ 
+  xor ax,ax 
+  xor bx,bx 
+  xor cx,cx  
+
+    mov al, 1111b ;cor do pixel
+	mov cx, 4  ;posição x
+	mov dx, 5  ;posição y
+    xor bx,bx   
+    mov bx,190
+     ;linha vertical, lado esquerdo (body)
+ linha_vl:       
+    inc dx
+    mov ah, 0ch
+	int 10h     ; set pixel. 
+    dec bx
+    cmp bx,0
+    jnz linha_vl
+    jmp linha2_vl
+ ;linha vertical II
+ linha2_vl:    
+	mov cx, 6  ;posição x
+	mov dx, 5  ;posição y
+    xor bx,bx   
+    mov bx,190
+ linha_vl2:
+    inc dx
+    mov ah, 0ch
+	int 10h     ; set pixel. 
+    dec bx
+    cmp bx,0
+    jnz linha_vl2
+    jmp linha_hu
+ linha_hu:
+	mov cx,3  ;posição x
+	mov dx, 5  ;posição y
+    xor bx,bx   
+    mov bx,185
+ linha_h1:
+     inc cx
+     mov ah,0ch
+     int 10h
+     dec bx
+     cmp bx,0
+     jnz linha_h1
+     jmp next_lineI
+ next_lineI:
+    mov cx,188 ;posição x
+	mov dx, 5  ;posição y
+    xor bx,bx   
+    mov bx,190
+ linha_vr: 
+    inc dx
+    mov ah, 0ch
+	int 10h     ; set pixel. 
+    dec bx
+    cmp bx,0
+    jnz linha_vr
+    jmp linha_vr2
+ linha_vr2: 
+     mov cx,186 ;posição x
+	mov dx, 5  ;posição y
+    xor bx,bx   
+    mov bx,190
+ linha2_vr:  
+   inc dx
+    mov ah, 0ch
+	int 10h     ; set pixel. 
+    dec bx
+    cmp bx,0
+    jnz linha2_vr
+    jmp linha_hd
+ linha_hd:  
+    mov cx,3  ;posição x
+	mov dx,195 ;posição y
+    xor bx,bx   
+    mov bx,185
+ linha_hd2:   
+     inc cx
+     mov ah,0ch
+     int 10h
+     dec bx
+     cmp bx,0
+     jnz linha_hd2
+     jmp next_lineII
+;linhas do visor
+next_lineII:
+   mov cx, 10  ;posição x
+   mov dx, 10  ;posição y
+   xor bx,bx   
+   mov bx,30
+ visor_lineI:  
+    inc dx
+     mov ah, 0ch
+	 int 10h     ; set pixel. 
+     dec bx
+     cmp bx,0
+     jnz visor_lineI
+     jmp visorH_line
+ visorH_line:
+   mov cx, 9 ;posição x
+   mov dx, 10  ;posição y
+   xor bx,bx   
+   mov bx,172
+ visorH_lineI:
+    inc cx
+     mov ah,0ch
+     int 10h
+     dec bx
+     cmp bx,0
+     jnz visorH_lineI
+     jmp visorV_line 
+ visorV_line: 
+   mov cx, 182  ;posição x
+   mov dx, 9  ;posição y
+   xor bx,bx   
+   mov bx,30
+ visorV_lineI:
+     inc dx
+     mov ah, 0ch
+	 int 10h     ; set pixel. 
+     dec bx
+     cmp bx,0
+     jnz visorV_lineI
+     jmp visorHb_line
+ visorHb_line:
+
+   mov cx, 10  ;posição x
+   mov dx, 40  ;posição y
+   xor bx,bx   
+   mov bx,172
+ visorHb_lineI:
+     inc cx
+     mov ah,0ch
+     int 10h
+     dec bx
+     cmp bx,0
+     jnz visorHb_lineI
+     jmp input_cursor 
+
+input_cursor:
+ mov ah,2  ;seta posicao do cursor
+ mov dh,2  ;y
+ mov dl,2  ;x                                                                                                  
+ mov bh,0  ;numero da pagina 
+ int 10h  
+  ret
+endp menu_calc 
+
+calc_entrada proc                 
+  entrada_calc:
+     mov ah,00h        ;le o caracter de entrada do usuario 
+     int 16h
+     ;casos que pularam para a entrada num1
+      cmp al,'g'
+      je entrada_numero
+      cmp al,'g'
+      je entrada_numero
+    ;casos que pularam para entrada da operaçao apos n1 
+      cmp al,'o'
+      je operaçaoCalc 
+      cmp al,'O'
+      je operaçaoCalc
+    ;casos de entrada de um segundo numero 
+      cmp al,'h'
+      je entrada_numero2 
+      cmp al,'H'
+      je entrada_numero2
+    
+     ;entrada do tipo log
+      cmp al,'l'
+      je entrada_log   
+      cmp al,'L'
+      je entrada_log  
+
+     ;entrada do tipo raiz 
+      cmp al,'r'    
+      je entrada_raiz 
+      cmp al,'R'
+      je entrada_raiz 
+ 
+     ;entrada do tipo modulo 
+      cmp al,'m'
+      je entrada_modulo
+      cmp al,'M'
+      je entrada_modulo 
+ 
+     ;entrada do tipo funçao 
+      cmp al,'x'
+      je entrada_calc
+      cmp al,'X'
+      je entrada_funçao
+     ;caso o usuario aperte C = limpa o visor
+      cmp al,'C'
+      je limpa
+      cmp al,'c'
+      je limpa
+     ;caso o usuario aperte Z -> sai da cal e volta para o menu
+     cmp al,'z'
+     je sai_calc 
+     cmp al,'Z'
+     je sai_calc 
+  
+   jmp entrada_calc
+ 
+           entrada_numero: 
+             call num1                                                 
+             ;volta para a entrada_calc p/ entrada da op e de n2
+             jmp entrada_calc
+           operaçaoCalc: 
+             call operacao           
+             jmp entrada_calc
+           entrada_numero2: 
+             call num2 
+             ;chama o procedimento de realizar op 
+             call realiza_op 
+             ;volta para o inicio 
+             jmp entrada_calc
+           entrada_log: 
+              ;printa 'log' no visor
+              mov ah,09h 
+              lea dx,visor_log 
+              int 21h
+             ;move o cursor para entrada da base 
+              mov ah,2 ;seta posiçao do cursor
+              mov dh,3 ;y
+              mov dl,5 ;x  
+              mov bh,0 ;numero da pagina
+             int 10h
+             ;entrada da base -> call n1 
+               call num1
+             ;move o cursor para entrada do logaritimando 
+              mov ah,2 
+              mov dh,2
+              mov dl,8
+              mov bh,0 
+              int 10h 
+             ;entrada do logaritimando -> call n2 
+             call num2
+             call logF  ;-> armazena resultado na variavel 
+  
+             call resultado
+             jmp entrada_calc
+ 
+       entrada_raiz: 
+              ;printa o simbolo da raiz no visor 
+              mov ah,09H
+              lea dx,visor_raiz
+              int 21h
+              ;entrada do numero que vai ser calculado a raiz -> call num1 
+              call num1
+              ;call raizF -> aramazena resultado na variavel res 
+              call fraiz
+              ;call resultado
+              cmp res, -1
+              je n_tem_raiz
+              call resultado
+              jmp entrada_calc 
+             n_tem_raiz:
+              jmp entrada_calc
+ entrada_modulo:
+      ;coloca o simbolo de modulo na entrada 
+        mov ah,09h 
+        lea dx,visor_modulo
+        int 21h
+      ;entrada do usuario com o numero 
+       call num1       
+      ;chama modulof para calcular o modulo 
+       call fmodulo
+      ;mostra o resultado para o usuario 
+       call resultado 
+      ;volta para entrada 
+      jmp entrada_calc
+ entrada_funçao:
+    jmp entrada_calc 
+ limpa: 
+   call limpaf
+   jmp entrada_calc
+ sai_calc: 
+   jmp menu
+ saida_calcEntrada:
+  ret
+endp calc_entrada
+
+num1 proc
+   xor bx,bx
+   xor cx,cx 
+repete:         ;leitura do primeiro numero
+    mov ah,01h    
+    int 21h
+    ;entrada negativa
+    cmp al,'-'  
+    je numero_negativo
+    ;se a entrada do usuario nao for um numero, sai  
+    cmp al,13  ;compara se eh enter
+    je sai
+    cmp al,'='
+    je sai
+    cmp al,32 ;compara se espaço 
+    je sai
+    sub al,30h   ;transforma em numero 
+    
+    mov cl,al  ; move al para cl 
+
+    xor dx,dx     ;zerando para nao influenciar no MUL
+    mov ax,10
+    mul bx     ;multiplica bx * ax e armazena em ax
+    mov bx,ax
+    add bx,cx
+    jmp repete
+
+ numero_negativo:
+
+    repeteaux:         ;leitura do primeiro numero
+    mov ah,01h    
+    int 21h
+    ;se a entrada do usuario nao for um numero, sai  
+    cmp al,13   ;compara se eh enter
+    je saiaux
+    cmp al,'='
+    je saiaux
+    cmp al,20h 
+    je saiaux
+    sub al,30h   ;transforma em numero 
+    
+    mov cl,al  ; move al para cl 
+
+    xor dx,dx     ;zerando para nao influenciar no MUL
+    mov ax,10
+    mul bx     ;multiplica bx * ax e armazena em ax
+    mov bx,ax
+    add bx,cx
+    jmp repeteaux
+   
+ saiaux:
+    mov ax,-1
+    mul bx ;resultado estava em bx e agora foi multiplicado por -1 para ficar negativo
+    
+ sai:
+    mov cx,bx     
+    lea bx,n1     ;coloca o numero 1 na variavel n1
+    mov [bx],cx
+    
+    ret
+num1 endp
+
+operacao proc 
+   operacao_inicio:
+    mov ah,01h
+    int 21h
+  
+   ;se for '=' pula para mostrar resultado 
+    cmp al,'+'
+    je soma
+    cmp al,'-'
+    je subt
+    cmp al,'*'
+    je mult
+    cmp al,'d'
+    je divi
+    cmp al,'D'
+    je divi
+    cmp al,'e'
+    je exp
+    cmp al,'E'
+    je exp 
+    cmp al,'q'
+    je quad            
+    cmp al,'Q'
+    je quad 
+    cmp al,'p'
+    je porce
+    cmp al,'P'
+    je porce
+    cmp al, 'R'
+    je raiz
+    cmp al,'r'
+    je raiz
+    
+    cmp al, 'M'
+    je modulo
+    cmp al,'m'
+    je modulo
+    
+    jmp operacao_inicio
+soma:
+    xor ax,ax
+    add ax,1
+    lea bx,aux     ;move o numero 1 para a variavel aux que vai representar a soma
+    mov [bx],ax
+    jmp saio
+
+subt:
+    xor ax,ax
+    add ax,2
+    lea bx,aux     ;move o numero 2 para a variavel aux que vai representar a sub
+    mov [bx],ax
+    jmp saio
+mult:
+    xor ax,ax
+    add ax,3
+    lea bx,aux     ;move o numero 3 para a variavel aux que vai representar a mult
+    mov [bx],ax
+    jmp saio
+divi:
+    xor ax,ax 
+    add ax,4
+    lea bx,aux ;move o numero 4 para a variavel aux que vai representar a div 
+    mov [bx],ax
+    jmp saio 
+exp:
+    xor ax,ax 
+    add ax,5
+    lea bx,aux ;move o numero 5 para a variavel aux que vai representar o exponencial
+    mov [bx],ax
+    jmp saio 
+quad: 
+   xor ax,ax 
+   add ax,6
+   lea bx,aux ;move o numero 6 para variavel aux que vai representar o 'ao quadrado'
+   mov[bx],ax                    
+   jmp saio
+porce: 
+   xor ax,ax 
+   add ax,7   ;move o numero 7 para variavel aux que vai representar a porcentagem
+   lea bx,aux
+   mov [bx],ax                            
+   jmp saio
+raiz:
+   xor ax,ax 
+   add ax,8   ;move o numero 8 para variavel aux que vai representar a raiz
+   lea bx,aux
+   mov [bx],ax                            
+   jmp saio
+
+modulo:
+   xor ax,ax 
+   add ax,9   ;move o numero 9 para variavel aux que vai representar o modulo
+   lea bx,aux
+   mov [bx],ax                            
+   jmp saio
+saio:
+    ret
+operacao endp
+
+num2 proc
+    xor bx,bx
+    xor cx,cx 
+    repete2:         ;leitura do segundo numero
+    mov ah,01h    
+    int 21h
+    cmp al,3Dh ;compara se eh '='
+    je sai2
+    sub al,30h   ;transforma em numero 
+    
+    mov cl,al   ;move al para cl
+
+    xor dx,dx   ;zerando para nao influenciar no MUL
+    mov ax,10
+    mul bx      ;multiplica bx * ax e armazena em ax
+
+    mov bx,ax
+    add bx,cx
+    jmp repete2
+
+ sai2:
+    mov cx,bx
+    lea bx,n2 ;coloca o numero 2 na variavel n2
+    mov [bx],cx
+
+    ret
+num2 endp
+
+resultado proc     
+ ;a resposta das operaçoes se encontra em res 
+ xor cx,cx 
+ mov cl,1              
+ mov bx,res     ;move a resposta para bx
+ 
+  contagem: 
+    xor dx,dx   ;limpa dx             
+    mov ax,bx   ;move a resposta para ax p/ ser dividido por 10
+    mov bx,10 
+    div bx 
+    mov bx,ax   ;move o resto para bx 
+    
+    xor dx, dx            
+    mov ax,10 
+    mul cx      ;multiplica o separador por 10                
+    mov cx,ax                      
+    cmp bx,9 
+    jg contagem ;fica em loop ate que bx seja menor que 9
+
+    mov bx,res  ;move o resultado para bx 
+    imprimir_digitos: 
+     xor dx,dx  ;limpa dx e realiza a divisao de res pelo separador       
+     mov ax,bx                       
+     div cx                       
+
+     mov bx,dx  ;bx fica com o resto da div                      
+     
+     mov dx,ax  ;imprime o ax (consc da div)
+     mov ah,02h 
+     add dx,30h ;adiciona 30h para poder imprimir            
+     int 21h        
+
+     xor dx,dx                 
+     mov ax,cx  ;divide o separador por 10, ax/cl                  
+     mov cx,10 
+     div cx                    
+     mov cx,ax                        
+     cmp cx,1   ;se o resto for menor que 1 acaba                  
+     jg imprimir_digitos 
+     ;imprime o ultimo numero 
+     mov dx,bx             
+     mov ah,2h 
+     add dx,30h           
+     int 21h   
+     
+    ret
+endp resultado 
+
+fsoma proc
+    xor bx,bx
+    xor ax,ax
+    xor cx,cx
+
+    lea bx,n1     ;move o conteudo de n1 para cx
+    mov cx,[bx]
+    
+    lea bx,n2     ;move o conteudo de n2 para ax
+    mov ax,[bx]
+    
+    add ax,cx     ;faz a soma do ax e cx
+    
+    lea bx,res     ;coloca o resultado da variavel res
+    mov [bx],ax
+
+ret 
+fsoma endp
+
+fusub proc 
+    xor bx,bx
+    xor ax,ax
+    xor cx,cx 
+
+    lea bx,n2     ;move o conteudo de n1 para cx
+    mov cx,[bx]
+    
+    lea bx,n1     ;move o conteudo de n2 para ax
+    mov ax,[bx]
+    
+    sub ax,cx     ;faz a sub de ax por cx (ax-cx)
+    
+    lea bx,res     ;coloca o resultado da variavel res
+    mov [bx],ax
+    
+ret 
+fusub endp
+
+fumul proc 
+    xor bx,bx
+    xor ax,ax
+    xor cx,cx 
+    xor dx,dx  ;para nao influenciar no mul 
+
+    lea bx,n1     ;move o conteudo de n1 para ax
+    mov ax,[bx]
+    
+    lea bx,n2     ;move o conteudo de n2 para bx
+    mov bx,[bx]  
+    mul bx ;faz a multiplicacao e armazena em bx
+    
+    xor bx,bx 
+    lea bx,res      ;coloca o resultado na variavel res
+    mov [bx],ax
+ret
+fumul endp
+
+fudiv proc 
+    xor bx,bx
+    xor ax,ax 
+    xor cx,cx 
+    xor dx,dx
+
+    lea bx, n1 ;move o conteudo de n1 em ax
+    mov ax,[bx]
+    
+    lea bx,n2 ;move o conteudo de n2 para bx
+    mov bx,[bx]
+
+    xor dx,dx
+    div bx ;ax = ax/bx 
+
+    xor bx,bx 
+    lea bx,res  ;move o resultado(consciente) para a variavel res
+    mov [bx],ax 
+ret
+fudiv endp 
+
+fexp proc
+    push cx
+    push bx
+    push dx
+
+    xor bx,bx
+    xor cx,cx 
+    xor ax,ax 
+
+     
+    mov ax,n1 ;move o n1 para ax
+    
+    mov cx, n2 ;move o n2 para cx
+    cmp cx, 0
+    je resultado0
+    cmp cx, 1
+    je fim_fexp
+
+    sub cx, 1 ;cx -1 vezes para o loop
+
+   xor bx,bx
+   mov bx,ax 
+exponencial: ;o loop vai repetir por cx vezes (n2), multiplicando o n1 por ele mesmo 
+    mul bx      ;resultado vai ficar em ax 
+    loop exponencial
+
+    jmp fim_fexp
+    resultado0:
+        mov ax, 1
+    
+    fim_fexp:
+    mov res,ax ;move o resultado para a variavel res
+
+    pop dx
+    pop bx
+    pop cx
+    ret 
+fexp endp 
+
+fquad proc   
+    push ax 
+    push bx 
+    push dx                            
+    
+    xor ax,ax  ;limpa os registradores 
+    xor bx,bx   
+    xor dx,dx  ;para n influenciar na mul
+
+   mov ax,n1   ;passa o num1 para ax    
+   mov bx,n1
+   mul bx        ;ax = bx --> ax * ax --> x²      
+
+   lea bx,res     ;move a resposta para variavel res                             
+   mov [bx],ax                
+
+   pop dx 
+   pop bx                  
+   pop ax
+ ret
+endp fquad
+
+fporce proc 
+    xor bx,bx   ;limpa os registradores        
+    xor ax,ax 
+    xor cx,cx 
+    xor dx,dx      
+
+    mov ax,n1 ;move n1 para o ax
+    
+    mov bx,n2             
+    mul bx      ;n2 * ax (n1/100 --> n1%)
+
+    xor bx,bx
+    mov bx,100
+    div bx ;resultado vai estar no ax 
+
+    xor bx,bx    ;coloca o resultado na variavel res   
+    lea bx,res                                  
+    mov [bx],ax                            
+ret                    
+endp fporce
+
+fraiz proc 
+   mov bx,1
+   mov cx, 255  
+repeteraiz:
+   mov ax, bx
+   xor dx, dx
+   mul bx 
+    
+   cmp ax, n1 
+   je sairaiz
+   ja naotem
+
+   inc bx
+   loop repeteraiz
+naotem:
+   ;imprime mensagem de 'n tem raiz para o usuario '
+   mov bx, -1
+    mov ah,09h             
+    lea dx,[nao_tem_raiz]
+    int 21h
+sairaiz:                                 
+    mov res,bx 
+   ret
+endp fraiz
+
+fmodulo proc
+   xor cx,cx 
+   mov cx,n1
+   cmp cx,0
+   mov ax,-1
+   jb moduloo
+   jmp saii
+moduloo:
+   mul cx 
+   mov cx,ax 
+   jmp saii
+
+saii:
+   mov res,cx 
+   ret 
+fmodulo endp 
+
+
+logF proc
+   mov res, 0
+   mov ax, n2
+   repetelog:
+      cmp ax, 1
+      jbe sailog
+      
+      xor dx, dx
+      div n1
+
+      inc res
+   jmp repetelog
+
+sailog:
+    
+ret
+logF endp 
+
+
+limpaf proc 
+   ;volta o cursor para o começo da entrada do usuario
+   mov ah,2    
+   mov dh,2 
+   mov dl,2
+   mov bh,0 
+   int 10h 
+   ;limpa a primeira linha
+   mov ah,09h  
+   lea dx,limpa_visor
+   int 21h
+   ;move o cursor para segunda linha 
+   mov ah,2  
+   mov dh,3
+   mov dl,3
+   mov bh,0 
+   int 10h  
+   ;limpa segunda linha    
+   mov ah,09h 
+   lea dx,limpa_visor
+   int 21h
+   ;move o cursor novamente para entrada 
+   mov ah,2    
+   mov dh,2 
+   mov dl,2
+   mov bh,0 
+   int 10h   
+   ret                      
+endp limpaf 
+;------------------------------------------------
+;                CONVERSOR
+;------------------------------------------------
+menu_conversor proc 
+  mov ah,0h ;set video mode 
+mov al,13h ; 256 color graphics 
+int 10h 
+mov ax,@data 
+mov es,ax 
+
+lea bp,conversorTitleI  
+mov ah,13h    ;função 13 - write string 
+mov al,01h    ;movimentação do cursor esta em bl
+xor bx,bx     ;limpa bx 
+mov bl,11     ;cor
+mov cx,36     ;tamanho da string
+mov dh,1      ;posiçao y
+mov dl,3    ;posicao x
+int 10h 
+ 
+lea bp,conversorTitleII  
+mov ah,13h    ;função 13 - write string 
+mov al,01h    ;movimentação do cursor esta em bl
+xor bx,bx     ;limpa bx 
+mov bl,11     ;cor
+mov cx,36     ;tamanho da string
+mov dh,2      ;posiçao y
+mov dl,3    ;posicao x
+int 10h 
+
+lea bp,conversorTitleIII 
+mov ah,13h    ;função 13 - write string 
+mov al,01h    ;movimentação do cursor esta em bl
+xor bx,bx     ;limpa bx 
+mov bl,11     ;cor
+mov cx,36    ;tamanho da string
+mov dh,3      ;posiçao y
+mov dl,3     ;posicao x
+int 10h 
+ 
+ lea bp,conv_saida
+ mov ah,13h
+ mov al,01h 
+ xor bx,bx                      
+ mov bl,15 
+ mov cx,8
+ mov dh,20
+ mov dl,15
+ int 10h 
+
+ lea bp,decimal_button
+ mov ah,13h
+ mov al,01h 
+ xor bx,bx 
+ mov bl,15
+ mov cx,10
+ mov dh,5
+ mov dl,4
+ int 10h 
+
+lea bp,[binario_button]
+mov ah,13h 
+mov al,01h  
+xor bx,bx 
+mov bl,15
+mov cx,10
+mov dh,5
+mov dl,16
+int 10h
+
+lea bp,[hexa_button]
+mov ah,13h 
+mov al,01h 
+xor bx,bx 
+mov bl,15
+mov cx,9
+mov dh,5
+mov dl,28
+int 10h 
+ endp menu_conversor
+fconv proc 
+    mov ah,00h      ;le a entrada do usuario 
+    int 16h
+    cmp al, 58h      ;if al= X || x --> decimal
+    je deci
+    cmp al,78h
+    je deci
+    cmp al,59h       ;if al= Y || y --> binario
+    je bin
+    cmp al,79h
+    je bin
+    cmp al,5Ah      ;if al= Z || z --> hexadecimal
+    je hex 
+    cmp al,7Ah
+    je hex
+    cmp al, 01h
+    jmp saimenu
+    
+deci:
+    mov ah,09h             ;informa a escolha ao usuario 
+    lea dx,escolha_decimal
+    int 21h
+ ;entrada do caso decimal
+    CALL deci_geral
+    jmp saiFconv 
+bin: 
+   mov ah,09h             ;informa a escolha ao usuario
+   lea dx,escolha_binario
+   int 21h
+ ;entrada do caso binario
+    CALL bin_geral
+    jmp saiFconv 
+hex: 
+   mov ah,09h             ;informa escolha ao usuario
+   lea dx,escolha_hexadecimal
+   int 21h
+;entrada caso hexadecimal
+    call hexa_geral 
+   jmp saifconv
+saimenu:
+   jmp menu
+saiFconv:
+ret 
+fconv endp 
+
+deci_geral proc 
+    CALL num1   ;entrada decimal que vai ser colocado na variavel n1
+
+    ler_decimal:
+        mov ah, 09h
+        lea dx, escolhe
+        int 21h
+
+        mov ah,01h ; pessoa digita a base que vai converter 
+        int 21h
+        
+        cmp al,59h     
+        je bin2
+        cmp al,79h
+        je bin2
+        
+        cmp al,5Ah
+        je hex2
+        cmp al,7Ah
+        je hex2
+        
+        jmp ler_decimal
+bin2:
+    mov ah,09h            ;mostra ao usuario a opcao de converçao   
+    lea dx,escolha_binario  
+    int 21h
+    
+    CALL deci_bin 
+    jmp saic
+    
+hex2:
+    mov ah,09h          ;mostra ao usuario a opcao de converçao   
+    lea dx,escolha_hexadecimal
+    int 21h
+    
+    CALL deci_hex 
+    jmp saic 
+saic:
+    ret
+deci_geral endp 
+
+deci_bin proc 
+    mov bx, n1 ;move o n1 para o bx
+
+    xor cx,cx ;zera o cx (numero de bits)
+  bina:
+    mov ax,bx
+    mov bx,2 
+    xor dx,dx ;zerar o dx para nao influenciar no div
+    div bx
+    push dx ;push para guardar o resto da div para formar o binario 
+
+    inc cx    ;incrimenta cx para contar os bits
+    mov bx,ax 
+    cmp bx,0 
+    ja bina
+    
+  mostra_binario:    ;loop com a quantidade de bits
+    pop dx          ;pega os numeros do binario de volta 
+    cmp dx,0
+    jz mostra_zero 
+    mov ah,02h
+    mov dl,31h 
+    int 21h 
+    jmp fim_mostra_binario
+  mostra_zero:
+    mov ah,02h 
+    mov dl, 30h
+    int 21h 
+
+    fim_mostra_binario:
+    loop mostra_binario 
+   
+   ret 
+deci_bin endp 
+ 
+deci_hex proc  
+    mov bx, n1 ;move o numero de entrada para n1 
+    
+    xor cx, cx
+dec_hex_digitos:
+    mov ax,bx
+    mov bx, 16 
+    xor dx,dx  ;zerar o dx para nao influenciar no div
+    div bx
+    push dx    ;push para guardar o resto da div para formar o binario 
+
+    inc cx    ;incrimenta cx para contar os bits
+    mov bx,ax 
+    cmp bx,0 
+    ja dec_hex_digitos 
+    
+dec_hex_mostrar:    
+    pop dx       ;desempilha o numero em hexa   
+    cmp dx, 9   
+    ja hexdigito ;se for letra, imprime a letra correspondente 
+    
+    ADD DX, 30h  ;se for numero, soma 30h e mostra na tela
+    jmp escreve_digito
+ hexdigito:
+    ADD DX, 37h
+
+    escreve_digito:
+    mov ah,02h
+    int 21h 
+    
+loop dec_hex_mostrar
+ret 
+deci_hex endp 
+
+bin_geral proc 
+    CALL bin_deci 
+   
+    mov ah,09h
+    lea dx, escolhe ;mostra a mensagem da base desejada
+    int 21h
+
+    mov ah,01h    ;pessoa vai digitar para o que deseja converter 
+    int 21h
+
+    cmp al, 58h      ;if al= X || x --> decimal
+    je decim
+    cmp al,78h
+    je decim
+    
+    cmp al,5Ah       ;if al= Z || z --> hexadecimal
+    je hexad
+    cmp al,7Ah
+    je hexad
+
+decim:
+    mov ah,09h           ;informa a escolha ao usuario
+    lea dx,escolha_decimal
+    int 21h
+    
+    ;impressão
+    
+    ;  MOV AH, 2
+    ;  MOV DX, BX   ;O VALOR EM DECIMAL ESTA EM BX
+    ;  ADD DL, 30h
+    ;  INT 21h
+
+ ;DEVE SER IMPRESSO TODOS OS DIGITOS
+ ;inicio IMPRESSAO
+     xor cx, cx
+ dec_multdigitos:
+    mov ax,bx
+    mov bx, 10 
+    xor dx,dx ;zerar o dx para nao influenciar no div
+    div bx
+    push dx ;push para guardar o resto da div para formar o binario 
+
+    inc cx    ;incrimenta cx para contar os bits
+    mov bx,ax 
+    cmp bx,0 
+    ja dec_multdigitos 
+    
+ dec_multidigitos_mostrar:    
+    pop dx ;pega o numero de volta 
+
+    ADD DX, 30h
+
+    mov ah,02h
+    int 21h 
+    
+    loop dec_multidigitos_mostrar
+
+     ;FIM IMPRESSAO DE TODOS OS DIGITOS
+   
+    mov ah,09h
+    lea dx,pula_linha  ;pula a linha 
+    int 21h
+    
+    mov ah,09h
+    lea dx,fim_leitura  ;mensagem fim da leitura
+    int 21h 
+
+    jmp sai4
+
+hexad:
+    mov ah,09h         ;informa a escolha ao usuario
+    lea dx,escolha_hexadecimal
+    int 21h
+    
+ ;entrada binaria esta em decimal, entao converte decimal hexa  
+    mov n1,bx
+    CALL deci_hex 
+    
+    jmp sai4
+
+sai4:
+    ret
+bin_geral endp 
+
+bin_deci proc 
+    xor bx, bx ;zera bx para o rotulo bin_deci_converte
+    mov n1, 2 ;constante para potencia no rotulo bin_deci_converte
+
+    xor cx, cx
+    bin_deci_leitura:
+        mov ah, 1
+        int 21h
+        
+        cmp al, 13
+        je bin_deci_converte
+        
+        sub AL, 30h
+        XOR AH, AH
+        push AX
+
+        inc ch
+        jmp bin_deci_leitura
+    
+    bin_deci_converte:
+        POP DX
+
+        cmp dx, 0
+        je proximo_bit
+
+        mov ax, cx
+        xor ah, ah ;limpar a parte alta para substituir mov n2, cl
+        mov n2, ax
+        call fexp ;x elevado y
+
+        mov ax, res
+        add bx, ax
+
+        proximo_bit:
+        inc cl
+        dec ch
+        JNZ bin_deci_converte
+    ret
+bin_deci endp 
+
+hexa_geral proc           
+ ;entrada do tipo hexadecimal  
+ xor cx, cx ;cx vai ser usado como contador
+ hexa_hg:
+  mov ah,01h    
+  int 21h 
+  
+  cmp al, 13 ;é enter ?
+  je leituraOP
+  cmp al,'9'
+  ja letra_hg  ;if al> 9 --> letra tabela ascii
+  jbe numero_hg ;if al < 9 --> numero tabela ascii
+ letra_hg: 
+    cmp al,'A'
+    jb hexa_hg
+    cmp al,'F'
+    ja hexa_hg
+  ;transforma as letras em numeros decimais correspondentes  
+    xor ah, ah
+    sub al,55  
+    push ax   ;guarda na pilha 
+    inc ch
+    jmp hexa_hg
+ numero_hg:
+    xor ah, ah
+    sub al,30h ;transforma ascii em numero
+    push ax
+    inc ch
+    jmp hexa_hg
+leituraOP:
+    mov ah,09h   ;pergunta ao usuario a escolha de conversao 
+    lea dx,escolhe
+    int 21h 
+  
+    mov ah,01h 
+    int 21h 
+   
+    cmp al,59h       ;if al= Y || y --> binario
+    je hexa_binaOP
+    cmp al,79h
+    je hexa_binaOP  
+    
+    cmp al, 58h      ;if al= X || x --> decimal
+    je hexa_deciOP
+    cmp al,78h   
+    je hexa_deciOP
+    jmp leituraOP    ;se nao for nenhuma opçao correspondente 
+ hexa_binaOP: 
+   mov ah,09h 
+   lea dx,escolha_binario
+   int 21h 
+
+   call hexa_deci
+   call deci_bin
+
+   jmp hexa_geral_fim
+ hexa_deciOP: 
+  mov ah,09h 
+  lea dx,escolha_decimal
+  int 21h 
+  
+  call hexa_deci
+  
+  mov bx, n1        ;move o valor decimal de n1 p/ res                            
+  mov res,bx
+  
+  call resultado   ;chama o procedimento resultado -> imprime numero decimal 
+ 
+ mov ah, 9
+ lea dx, fim_leitura
+ int 21h
+
+ mov ah, 1
+ int 21h
+
+   hexa_geral_fim:
+  ret
+ endp hexa_geral 
+
+hexa_deci proc  
+ ;o numero de entrada do usuario se encontra na pilha em formato decimal
+   POP SI
+    xor bx, bx ;zera bx para o rotulo bin_deci_converte
+    mov n1, 16 ;constante para potencia no rotulo bin_deci_converte
+
+    hexa_deci_converte:
+        POP DX
+
+        mov ax, cx
+        xor ah, ah ;limpar a parte alta para substituir mov n2, cl
+        mov n2, ax
+        call fexp ;x elevado y   -> 16 elevado cl
+
+        mov AX, DX
+        
+        PUSH CX
+
+        mov CX, res
+        XOR DX, DX
+        MUL CX 
+            
+        POP CX
+
+        add bx, ax
+
+        
+
+
+        inc cl      
+        dec ch
+        JNZ hexa_deci_converte
+
+        mov n1,bx
+        
+ ;nao imprime, so converte p/ decimal
+ 
+ PUSH SI
+ ret
+ endp hexa_deci 
+
+end main 
